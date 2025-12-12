@@ -1,0 +1,202 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/azure-agentic-infraops/acs-config.schema.json",
+  "title": "Azure Communication Services Configuration",
+  "description": "Configuration schema for post-deployment ACS setup",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "description": {
+      "type": "string",
+      "description": "Configuration file description"
+    },
+    "resourceGroup": {
+      "type": "string",
+      "description": "Azure resource group name",
+      "pattern": "^[a-zA-Z0-9-_]+$"
+    },
+    "acsResourceName": {
+      "type": ["string", "null"],
+      "description": "ACS resource name (auto-detected if null)"
+    },
+    "phoneNumbers": {
+      "type": "object",
+      "description": "Phone number configuration",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "countryCode": {
+          "type": "string",
+          "description": "ISO 3166-1 alpha-2 country code",
+          "pattern": "^[A-Z]{2}$",
+          "default": "US"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["tollFree", "geographic"],
+          "default": "tollFree"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["inbound", "outbound"]
+          }
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "email": {
+      "type": "object",
+      "description": "Email domain configuration",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "domainType": {
+          "type": "string",
+          "enum": ["AzureManaged", "CustomDomain"]
+        },
+        "customDomain": { "type": ["string", "null"] },
+        "senderUsername": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "sms": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "webhookUrl": { "type": ["string", "null"], "format": "uri" },
+        "deliveryReports": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    },
+    "voice": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "recordCalls": { "type": "boolean" },
+        "transcriptionEnabled": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    },
+    "video": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "recordMeetings": { "type": "boolean" },
+        "maxParticipants": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "notes": { "type": "string" }
+      }
+    },
+    "chat": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "retentionDays": { "type": "integer", "minimum": 1 },
+        "maxParticipantsPerThread": { "type": "integer", "minimum": 1, "maximum": 250 },
+        "notes": { "type": "string" }
+      }
+    },
+    "eventGrid": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "createSubscriptions": { "type": "boolean" },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "eventTypes": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "functionName": { "type": "string" }
+            },
+            "required": ["name", "eventTypes", "functionName"]
+          }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "identities": {
+      "type": "object",
+      "properties": {
+        "testIdentities": {
+          "type": "object",
+          "properties": {
+            "create": { "type": "boolean" },
+            "count": { "type": "integer", "minimum": 1 },
+            "scopes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["chat", "voip", "turn"]
+              }
+            }
+          }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "managedIdentity": { "type": "boolean" },
+        "disableLocalAuth": { "type": "boolean" },
+        "allowedOrigins": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "properties": {
+        "diagnosticsEnabled": { "type": "boolean" },
+        "logRetentionDays": { "type": "integer", "minimum": 1 },
+        "alertRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "enabled": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "teamsInterop": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "tenantId": { "type": ["string", "null"], "format": "uuid" },
+        "notes": { "type": "string" }
+      }
+    },
+    "advancedMessaging": {
+      "type": "object",
+      "properties": {
+        "whatsApp": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "businessAccountId": { "type": ["string", "null"] },
+            "notes": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "required": ["resourceGroup"]
+}

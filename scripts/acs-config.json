@@ -1,0 +1,140 @@
+{
+  "$schema": "./acs-config.schema.json",
+  "description": "Azure Communication Services post-deployment configuration",
+  
+  "resourceGroup": "rg-acs-dev",
+  "acsResourceName": null,
+  
+  "phoneNumbers": {
+    "enabled": false,
+    "countryCode": "US",
+    "type": "tollFree",
+    "capabilities": ["inbound", "outbound"],
+    "quantity": 1,
+    "notes": "Phone numbers require Azure Communication Services Phone Numbers capability and billing setup"
+  },
+  
+  "email": {
+    "enabled": false,
+    "domainType": "AzureManaged",
+    "customDomain": null,
+    "senderUsername": "DoNotReply",
+    "notes": "Email requires Azure Communication Services Email capability to be enabled"
+  },
+  
+  "sms": {
+    "enabled": true,
+    "webhookUrl": null,
+    "deliveryReports": true,
+    "notes": "SMS requires a phone number with SMS capability"
+  },
+  
+  "voice": {
+    "enabled": true,
+    "recordCalls": false,
+    "transcriptionEnabled": false,
+    "notes": "Voice calling can use VoIP or PSTN (PSTN requires phone numbers)"
+  },
+  
+  "video": {
+    "enabled": true,
+    "recordMeetings": false,
+    "maxParticipants": 100,
+    "notes": "Video calling supports up to 1000 participants with Teams interop"
+  },
+  
+  "chat": {
+    "enabled": true,
+    "retentionDays": 90,
+    "maxParticipantsPerThread": 250,
+    "notes": "Chat messages are stored and can be retrieved via API"
+  },
+  
+  "eventGrid": {
+    "enabled": true,
+    "createSubscriptions": false,
+    "subscriptions": [
+      {
+        "name": "sms-received",
+        "eventTypes": ["Microsoft.Communication.SMSReceived", "Microsoft.Communication.SMSDeliveryReportReceived"],
+        "functionName": "process_sms_received"
+      },
+      {
+        "name": "chat-events",
+        "eventTypes": [
+          "Microsoft.Communication.ChatMessageReceived",
+          "Microsoft.Communication.ChatThreadCreated",
+          "Microsoft.Communication.ChatParticipantAdded",
+          "Microsoft.Communication.ChatParticipantRemoved"
+        ],
+        "functionName": "process_chat_event"
+      },
+      {
+        "name": "recording-events",
+        "eventTypes": ["Microsoft.Communication.RecordingFileStatusUpdated"],
+        "functionName": "process_recording_event"
+      },
+      {
+        "name": "call-events",
+        "eventTypes": [
+          "Microsoft.Communication.IncomingCall",
+          "Microsoft.Communication.CallStarted",
+          "Microsoft.Communication.CallEnded"
+        ],
+        "functionName": "process_call_event"
+      }
+    ],
+    "notes": "Set createSubscriptions to true after deploying Function App code"
+  },
+  
+  "identities": {
+    "testIdentities": {
+      "create": true,
+      "count": 1,
+      "scopes": ["chat", "voip"]
+    },
+    "notes": "Test identities are used for development and testing"
+  },
+  
+  "security": {
+    "managedIdentity": true,
+    "disableLocalAuth": false,
+    "allowedOrigins": [
+      "http://localhost:3000",
+      "http://localhost:5000",
+      "https://*.azurewebsites.net"
+    ],
+    "notes": "CORS configuration for web applications"
+  },
+  
+  "monitoring": {
+    "diagnosticsEnabled": true,
+    "logRetentionDays": 30,
+    "alertRules": [
+      {
+        "name": "high-sms-failure-rate",
+        "description": "Alert when SMS failure rate exceeds 5%",
+        "enabled": false
+      },
+      {
+        "name": "call-quality-degradation",
+        "description": "Alert when call quality metrics degrade",
+        "enabled": false
+      }
+    ]
+  },
+  
+  "teamsInterop": {
+    "enabled": false,
+    "tenantId": null,
+    "notes": "Requires Azure Communication Services - Teams Interoperability setup"
+  },
+  
+  "advancedMessaging": {
+    "whatsApp": {
+      "enabled": false,
+      "businessAccountId": null,
+      "notes": "Requires WhatsApp Business Account and Meta Business verification"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+# ==============================================================================
+# Line Ending Normalization
+# ==============================================================================
+# Ensures consistent line endings across different operating systems
+# All text files normalized to LF (Unix-style)
+
+# Auto-detect text files and normalize to LF
+* text=auto eol=lf
+
+# ==============================================================================
+# Code Files
+# ==============================================================================
+*.bicep text eol=lf
+*.tf text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# PowerShell - preserve UTF-8 BOM while using LF
+*.ps1 text working-tree-encoding=UTF-8 eol=lf
+*.psm1 text working-tree-encoding=UTF-8 eol=lf
+*.psd1 text working-tree-encoding=UTF-8 eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# ==============================================================================
+# Documentation
+# ==============================================================================
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+
+# ==============================================================================
+# Configuration
+# ==============================================================================
+*.env text eol=lf
+*.env.* text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+
+# ==============================================================================
+# Binary Files
+# ==============================================================================
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.exe binary
+*.dll binary
