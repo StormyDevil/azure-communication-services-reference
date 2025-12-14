@@ -63,9 +63,9 @@ $ErrorActionPreference = 'Stop'
 # ============================================================================
 
 $ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-$InfraPath = Join-Path $ScriptPath '..' 'infra' 'bicep'
+$InfraPath = Join-Path (Join-Path (Join-Path $ScriptPath '..') 'infra') 'bicep'
 $MainBicep = Join-Path $InfraPath 'main.bicep'
-$ParameterFile = Join-Path $InfraPath 'parameters' "$Environment.bicepparam"
+$ParameterFile = Join-Path (Join-Path $InfraPath 'parameters') "$Environment.bicepparam"
 
 # Default resource group name
 if (-not $ResourceGroupName) {
@@ -81,9 +81,9 @@ $DeploymentName = "acs-deployment-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 function Write-Banner {
     param([string]$Message)
     Write-Host ""
-    Write-Host "╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║  $($Message.PadRight(69))║" -ForegroundColor Cyan
-    Write-Host "╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "=========================================================================" -ForegroundColor Cyan
+    Write-Host "  $Message" -ForegroundColor Cyan
+    Write-Host "=========================================================================" -ForegroundColor Cyan
     Write-Host ""
 }
 
@@ -99,19 +99,19 @@ function Write-Step {
 
 function Write-Success {
     param([string]$Message)
-    Write-Host "  ✓ " -ForegroundColor Green -NoNewline
+    Write-Host "  [OK] " -ForegroundColor Green -NoNewline
     Write-Host $Message
 }
 
 function Write-Info {
     param([string]$Message)
-    Write-Host "  ℹ " -ForegroundColor Blue -NoNewline
+    Write-Host "  [i] " -ForegroundColor Blue -NoNewline
     Write-Host $Message
 }
 
-function Write-Error {
+function Write-ErrorMsg {
     param([string]$Message)
-    Write-Host "  ✗ " -ForegroundColor Red -NoNewline
+    Write-Host "  [X] " -ForegroundColor Red -NoNewline
     Write-Host $Message -ForegroundColor Red
 }
 
@@ -121,9 +121,9 @@ function Write-Error {
 
 Write-Banner "Azure Communication Services - Deployment"
 
-Write-Host "  ┌────────────────────────────────────────────────────────────────────┐"
-Write-Host "  │  DEPLOYMENT CONFIGURATION                                          │"
-Write-Host "  └────────────────────────────────────────────────────────────────────┘"
+Write-Host "  -------------------------------------------------------------------------"
+Write-Host "  DEPLOYMENT CONFIGURATION"
+Write-Host "  -------------------------------------------------------------------------"
 Write-Host ""
 Write-Host "      Environment:      $Environment" -ForegroundColor White
 Write-Host "      Location:         $Location" -ForegroundColor White
@@ -139,16 +139,20 @@ Write-Step 1 5 "Checking prerequisites..."
 # Check Azure CLI
 $azVersion = az version 2>&1 | ConvertFrom-Json -ErrorAction SilentlyContinue
 if (-not $azVersion) {
-    Write-Error "Azure CLI not found. Please install from https://aka.ms/azure-cli"
+    Write-ErrorMsg "Azure CLI not found. Please install from https://aka.ms/azure-cli"
     exit 1
 }
 Write-Success "Azure CLI v$($azVersion.'azure-cli') detected"
 
-# Check Bicep CLI
-$bicepVersion = bicep --version 2>&1
+# Check Bicep CLI (via Azure CLI)
+$bicepVersion = az bicep version 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Bicep CLI not found. Install with: az bicep install"
-    exit 1
+    Write-Info "Bicep CLI not found. Installing via Azure CLI..."
+    az bicep install
+    if ($LASTEXITCODE -ne 0) {
+        Write-ErrorMsg "Failed to install Bicep CLI"
+        exit 1
+    }
 }
 Write-Success "Bicep CLI detected"
 
@@ -167,7 +171,7 @@ if ($SubscriptionId) {
     Write-Info "Setting subscription to: $SubscriptionId"
     az account set --subscription $SubscriptionId
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to set subscription: $SubscriptionId"
+        Write-ErrorMsg "Failed to set subscription: $SubscriptionId"
         exit 1
     }
     $account = az account show | ConvertFrom-Json
@@ -179,9 +183,9 @@ else {
     
     if ($subscriptions.Count -gt 1) {
         Write-Host ""
-        Write-Host "  ┌────────────────────────────────────────────────────────────────────┐"
-        Write-Host "  │  AVAILABLE SUBSCRIPTIONS                                           │"
-        Write-Host "  └────────────────────────────────────────────────────────────────────┘"
+        Write-Host "  -------------------------------------------------------------------------"
+        Write-Host "  AVAILABLE SUBSCRIPTIONS"
+        Write-Host "  -------------------------------------------------------------------------"
         Write-Host ""
         
         for ($i = 0; $i -lt $subscriptions.Count; $i++) {
@@ -201,14 +205,14 @@ else {
                 $selectedSub = $subscriptions[$index]
                 az account set --subscription $selectedSub.id
                 if ($LASTEXITCODE -ne 0) {
-                    Write-Error "Failed to set subscription"
+                    Write-ErrorMsg "Failed to set subscription"
                     exit 1
                 }
                 $account = az account show | ConvertFrom-Json
                 Write-Success "Switched to subscription: $($account.name)"
             }
             else {
-                Write-Error "Invalid selection"
+                Write-ErrorMsg "Invalid selection"
                 exit 1
             }
         }
@@ -219,38 +223,30 @@ else {
     }
 }
 
-Write-Host "      └─ Subscription: $($account.name)" -ForegroundColor Gray
-Write-Host "      └─ Subscription ID: $($account.id)" -ForegroundColor Gray
+Write-Host "      -> Subscription: $($account.name)" -ForegroundColor Gray
+Write-Host "      -> Subscription ID: $($account.id)" -ForegroundColor Gray
 
 # Location selection (if default location is used)
 if ($Location -eq 'swedencentral') {
     Write-Host ""
-    Write-Host "  ┌────────────────────────────────────────────────────────────────────┐"
-    Write-Host "  │  SELECT DEPLOYMENT REGION (ACS Supported Data Locations)           │"
-    Write-Host "  └────────────────────────────────────────────────────────────────────┘"
+    Write-Host "  -------------------------------------------------------------------------"
+    Write-Host "  SELECT DEPLOYMENT REGION (ACS Supported Data Locations)"
+    Write-Host "  -------------------------------------------------------------------------"
     Write-Host ""
-    Write-Host "  Americas:" -ForegroundColor Cyan
+    
     $regions = @(
         @{ Name = 'unitedstates'; Description = 'United States'; Category = 'Americas' }
         @{ Name = 'brazilsouth'; Description = 'Brazil South (Sao Paulo)'; Category = 'Americas' }
         @{ Name = 'canadacentral'; Description = 'Canada Central (Toronto)'; Category = 'Americas' }
-    )
-    Write-Host ""
-    Write-Host "  Europe:" -ForegroundColor Cyan
-    $regions += @(
         @{ Name = 'europe'; Description = 'Europe (Default)'; Category = 'Europe' }
         @{ Name = 'francecentral'; Description = 'France Central (Paris)'; Category = 'Europe' }
         @{ Name = 'germanywestcentral'; Description = 'Germany West Central (Frankfurt)'; Category = 'Europe' }
         @{ Name = 'northeurope'; Description = 'North Europe (Ireland)'; Category = 'Europe' }
         @{ Name = 'norwayeast'; Description = 'Norway East (Oslo)'; Category = 'Europe' }
-        @{ Name = 'swedencentral'; Description = 'Sweden Central (Gävle)'; Category = 'Europe' }
+        @{ Name = 'swedencentral'; Description = 'Sweden Central (Gavle)'; Category = 'Europe' }
         @{ Name = 'switzerlandnorth'; Description = 'Switzerland North (Zurich)'; Category = 'Europe' }
         @{ Name = 'uksouth'; Description = 'UK South (London)'; Category = 'Europe' }
         @{ Name = 'westeurope'; Description = 'West Europe (Netherlands)'; Category = 'Europe' }
-    )
-    Write-Host ""
-    Write-Host "  Asia Pacific:" -ForegroundColor Cyan
-    $regions += @(
         @{ Name = 'asia'; Description = 'Asia Pacific'; Category = 'Asia' }
         @{ Name = 'australiaeast'; Description = 'Australia East (Sydney)'; Category = 'Asia' }
         @{ Name = 'centralindia'; Description = 'Central India (Pune)'; Category = 'Asia' }
@@ -258,10 +254,6 @@ if ($Location -eq 'swedencentral') {
         @{ Name = 'japanwest'; Description = 'Japan West (Osaka)'; Category = 'Asia' }
         @{ Name = 'koreacentral'; Description = 'Korea Central (Seoul)'; Category = 'Asia' }
         @{ Name = 'southeastasia'; Description = 'Southeast Asia (Singapore)'; Category = 'Asia' }
-    )
-    Write-Host ""
-    Write-Host "  Middle East & Africa:" -ForegroundColor Cyan
-    $regions += @(
         @{ Name = 'southafricanorth'; Description = 'South Africa North (Johannesburg)'; Category = 'MEA' }
         @{ Name = 'uaenorth'; Description = 'UAE North (Dubai)'; Category = 'MEA' }
     )
@@ -276,7 +268,7 @@ if ($Location -eq 'swedencentral') {
                 'Americas' { '  Americas:' }
                 'Europe' { '  Europe:' }
                 'Asia' { '  Asia Pacific:' }
-                'MEA' { '  Middle East & Africa:' }
+                'MEA' { '  Middle East and Africa:' }
             }
             Write-Host $categoryHeader -ForegroundColor Cyan
         }
@@ -295,7 +287,7 @@ if ($Location -eq 'swedencentral') {
             Write-Success "Selected region: $($regions[$index].Description) ($Location)"
         }
         else {
-            Write-Error "Invalid selection"
+            Write-ErrorMsg "Invalid selection"
             exit 1
         }
     }
@@ -303,22 +295,22 @@ if ($Location -eq 'swedencentral') {
         $Location = 'europe'
         Write-Info "Using default: Europe"
     }
-    else {
-        Write-Info "Using default region: swedencentral"
-    }
     Write-Host ""
 }
+else {
+    Write-Info "Using specified region: $Location"
+}
 
-Write-Host "      └─ Deployment Region: $Location" -ForegroundColor Gray
+Write-Host "      -> Deployment Region: $Location" -ForegroundColor Gray
 Write-Host ""
 
 # Check files exist
 if (-not (Test-Path $MainBicep)) {
-    Write-Error "Main Bicep template not found: $MainBicep"
+    Write-ErrorMsg "Main Bicep template not found: $MainBicep"
     exit 1
 }
 if (-not (Test-Path $ParameterFile)) {
-    Write-Error "Parameter file not found: $ParameterFile"
+    Write-ErrorMsg "Parameter file not found: $ParameterFile"
     exit 1
 }
 Write-Success "Template and parameter files found"
@@ -331,20 +323,20 @@ if (-not $SkipValidation) {
     Write-Step 2 5 "Validating Bicep templates..."
     
     # Bicep build
-    Write-Host "      └─ Running bicep build..." -ForegroundColor Gray
-    $buildOutput = bicep build $MainBicep 2>&1
+    Write-Host "      -> Running bicep build..." -ForegroundColor Gray
+    $buildOutput = az bicep build --file $MainBicep 2>&1
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Bicep build failed:"
+        Write-ErrorMsg "Bicep build failed:"
         Write-Host $buildOutput -ForegroundColor Red
         exit 1
     }
     Write-Success "Bicep build successful"
     
     # Bicep lint
-    Write-Host "      └─ Running bicep lint..." -ForegroundColor Gray
-    $lintOutput = bicep lint $MainBicep 2>&1
+    Write-Host "      -> Running bicep lint..." -ForegroundColor Gray
+    $lintOutput = az bicep lint --file $MainBicep 2>&1
     if ($lintOutput -match "Error") {
-        Write-Error "Bicep lint found errors:"
+        Write-ErrorMsg "Bicep lint found errors:"
         Write-Host $lintOutput -ForegroundColor Red
         exit 1
     }
@@ -390,7 +382,7 @@ $whatIfResult = az deployment group what-if `
     --no-pretty-print 2>&1
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "What-if analysis failed"
+    Write-ErrorMsg "What-if analysis failed"
     Write-Host $whatIfResult -ForegroundColor Red
     exit 1
 }
@@ -403,9 +395,9 @@ $deleteCount = ([regex]::Matches($whatIfText, "Delete")).Count
 $noChangeCount = ([regex]::Matches($whatIfText, "NoChange")).Count
 
 Write-Host ""
-Write-Host "  ┌────────────────────────────────────────────────────────────────────┐"
-Write-Host "  │  CHANGE SUMMARY                                                     │"
-Write-Host "  └────────────────────────────────────────────────────────────────────┘"
+Write-Host "  -------------------------------------------------------------------------"
+Write-Host "  CHANGE SUMMARY"
+Write-Host "  -------------------------------------------------------------------------"
 Write-Host ""
 Write-Host "      + Create:    $createCount resources" -ForegroundColor Green
 Write-Host "      ~ Modify:    $modifyCount resources" -ForegroundColor Yellow
@@ -441,7 +433,7 @@ if ($PSCmdlet.ShouldProcess($ResourceGroupName, "Deploy ACS infrastructure")) {
         --output json 2>&1
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Deployment failed"
+        Write-ErrorMsg "Deployment failed"
         Write-Host $deploymentResult -ForegroundColor Red
         exit 1
     }
@@ -456,9 +448,9 @@ if ($PSCmdlet.ShouldProcess($ResourceGroupName, "Deploy ACS infrastructure")) {
     $outputs = $deployment.properties.outputs
     
     Write-Host ""
-    Write-Host "  ┌────────────────────────────────────────────────────────────────────┐"
-    Write-Host "  │  DEPLOYMENT OUTPUTS                                                 │"
-    Write-Host "  └────────────────────────────────────────────────────────────────────┘"
+    Write-Host "  -------------------------------------------------------------------------"
+    Write-Host "  DEPLOYMENT OUTPUTS"
+    Write-Host "  -------------------------------------------------------------------------"
     Write-Host ""
     Write-Host "      ACS Endpoint:        $($outputs.acsEndpoint.value)" -ForegroundColor Cyan
     Write-Host "      App Service URL:     $($outputs.appServiceUrl.value)" -ForegroundColor Cyan
