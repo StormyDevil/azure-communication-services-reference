@@ -26,6 +26,11 @@ Azure Communication Services provides:
 
 ### Architecture Highlights
 
+![Azure Communication Services - Enterprise Architecture](docs/diagrams/acs_architecture.png)
+
+<details>
+<summary>📊 View as Mermaid Diagram (text-based)</summary>
+
 ```mermaid
 %%{init: {'theme':'neutral'}}%%
 graph TB
@@ -77,7 +82,9 @@ graph TB
     FUNC --> AI
 ```
 
-> 💡 **High-resolution diagrams**: Run `python docs/diagrams/generate_diagram.py` to generate detailed architecture diagrams (requires [Graphviz](https://graphviz.org/download/)).
+</details>
+
+> 💡 **Additional diagrams**: See [Landing Zone Integration](docs/diagrams/acs_landing_zone.png) and [Data Flow](docs/diagrams/acs_data_flow.png). Regenerate with `python docs/diagrams/generate_diagram.py` (requires [Graphviz](https://graphviz.org/download/)).
 
 ## 📋 Prerequisites
 
