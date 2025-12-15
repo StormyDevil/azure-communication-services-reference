@@ -103,7 +103,45 @@ graph TB
 
 ## 🚀 Quick Start
 
-### Option 1: One-Click Deploy (Recommended)
+### Option 1: Dev Container (Recommended) 🐳
+
+The fastest way to get started is using the included Dev Container, which provides a fully configured development environment with all required tools pre-installed.
+
+**Prerequisites:**
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [VS Code](https://code.visualstudio.com/) with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+**Steps:**
+
+```bash
+# Clone the repository
+git clone https://github.com/StormyDevil/azure-communication-services-reference.git
+cd azure-communication-services-reference
+
+# Open in VS Code
+code .
+```
+
+When VS Code opens, click **"Reopen in Container"** when prompted (or use `Ctrl+Shift+P` → "Dev Containers: Reopen in Container").
+
+The container includes:
+- ✅ Python 3.11 with all dependencies
+- ✅ Azure CLI with Bicep
+- ✅ Azure Functions Core Tools v4
+- ✅ PowerShell 7
+- ✅ Azure Developer CLI (azd)
+- ✅ Pre-configured VS Code extensions
+
+Once the container is running:
+```bash
+# Login to Azure
+az login
+
+# Deploy to Azure
+pwsh ./scripts/deploy.ps1 -Environment dev -Location swedencentral
+```
+
+### Option 2: Local Development
 
 ```bash
 # Clone the repository
@@ -119,7 +157,7 @@ pwsh ./scripts/deploy.ps1 -Environment dev -Location swedencentral
 - [PowerShell 7+](https://learn.microsoft.com/powershell/scripting/install/installing-powershell)
 - [Python 3.9+](https://www.python.org/downloads/) (for sample applications)
 
-### Option 2: Step-by-Step Deployment
+### Option 3: Step-by-Step Deployment
 
 ```bash
 # 1. Login to Azure
@@ -146,6 +184,9 @@ az deployment group create \
 
 ```
 azure-communication-services-reference/
+├── .devcontainer/           # Dev Container configuration
+│   ├── devcontainer.json    # Container settings & extensions
+│   └── post-create.sh       # Setup script
 ├── .env.example             # Environment variables template
 ├── .github/
 │   ├── chatmodes/           # GitHub Copilot chat modes
