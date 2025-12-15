@@ -356,6 +356,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 
 ## 🙏 Acknowledgments
 
+- **[Azure Agentic InfraOps](https://github.com/jonathan-vella/azure-agentic-infraops)** by Jonathan Vella - This project was created using the Azure Agentic InfraOps methodology
 - Azure Communication Services team
 - Azure Well-Architected team
 - Community contributors
