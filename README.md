@@ -37,35 +37,31 @@ graph TB
     
     subgraph "Azure Landing Zone"
         subgraph "Application Tier"
-            APPSVC[Azure App Service]
-            FUNC[Azure Functions]
-            APIM[API Management]
+            APPSVC[Azure App Service<br/>Flask API]
+            FUNC[Azure Functions<br/>Event Processing]
         end
         
         subgraph "Communication Services"
-            ACS[Azure Communication Services]
-            EVENTGRID[Event Grid]
+            ACS[Azure Communication Services<br/>Voice/Video/Chat/SMS]
+            EVENTGRID[Event Grid<br/>System Topic]
         end
         
         subgraph "Security & Identity"
-            KV[Key Vault]
+            KV[Key Vault<br/>Secrets & Keys]
             MI[Managed Identity]
-            ENTRA[Entra ID]
         end
         
         subgraph "Data & Monitoring"
-            COSMOS[Cosmos DB]
-            BLOB[Blob Storage]
-            LA[Log Analytics]
-            AI[App Insights]
+            COSMOS[Cosmos DB<br/>Chat History]
+            BLOB[Storage Account<br/>Recordings]
+            LA[Log Analytics<br/>Workspace]
+            AI[Application Insights]
         end
     end
     
-    WEB --> APIM
-    MOB --> APIM
-    BOT --> APIM
-    APIM --> APPSVC
-    APIM --> FUNC
+    WEB --> APPSVC
+    MOB --> APPSVC
+    BOT --> FUNC
     APPSVC --> ACS
     FUNC --> ACS
     ACS --> EVENTGRID
@@ -74,12 +70,14 @@ graph TB
     FUNC --> KV
     APPSVC --> MI
     FUNC --> MI
-    MI --> ENTRA
     FUNC --> COSMOS
     ACS --> BLOB
     ACS --> LA
     APPSVC --> AI
+    FUNC --> AI
 ```
+
+> 💡 **High-resolution diagrams**: Run `python docs/diagrams/generate_diagram.py` to generate detailed architecture diagrams (requires [Graphviz](https://graphviz.org/download/)).
 
 ## 📋 Prerequisites
 
@@ -151,26 +149,46 @@ az deployment group create \
 
 ```
 azure-communication-services-reference/
-├── .devcontainer/           # Dev Container configuration
-│   └── devcontainer.json
+├── .env.example             # Environment variables template
 ├── .github/
+│   ├── chatmodes/           # GitHub Copilot chat modes
 │   └── workflows/           # CI/CD pipelines
 ├── docs/
+│   ├── cost-estimate.md     # Cost estimation guide
+│   ├── diagrams/            # Architecture diagrams (Python)
 │   └── waf-assessment/      # Well-Architected assessment
 ├── infra/
 │   └── bicep/
 │       ├── main.bicep       # Main deployment template
+│       ├── main.json        # Compiled ARM template
 │       ├── modules/         # Reusable Bicep modules
+│       │   ├── acs-secrets.bicep
+│       │   ├── app-service.bicep
+│       │   ├── communication-services.bicep
+│       │   ├── cosmos-db.bicep
+│       │   ├── event-grid.bicep
+│       │   ├── function-app.bicep
+│       │   ├── key-vault.bicep
+│       │   ├── monitoring.bicep
+│       │   └── storage.bicep
 │       └── parameters/      # Environment parameters
-├── src/
-│   ├── api/                 # Flask REST API
-│   ├── functions/           # Azure Functions (event processing)
-│   └── samples/             # Python SDK samples
+│           ├── dev.bicepparam
+│           └── prod.bicepparam
 ├── scripts/
 │   ├── deploy.ps1           # Deployment script
 │   ├── cleanup.ps1          # Cleanup script
 │   ├── configure-acs.ps1    # Post-deployment configuration
-│   └── acs-config.json      # ACS configuration file
+│   ├── acs-config.json      # ACS configuration file
+│   └── acs-config.schema.json
+├── src/
+│   └── python/
+│       ├── app.py           # Flask REST API
+│       ├── acs_sdk_sample.py # ACS SDK examples
+│       ├── requirements.txt
+│       └── functions/       # Azure Functions (event processing)
+│           ├── function_app.py
+│           ├── function.json
+│           └── host.json
 ├── README.md
 ├── LICENSE
 ├── CONTRIBUTING.md
@@ -232,11 +250,14 @@ Edit the parameter files in `infra/bicep/parameters/`:
 using '../main.bicep'
 
 param environment = 'dev'
+param projectName = 'acsref'
 param enableSms = true
 param enableVoice = true
 param enableVideo = true
 param enableChat = true
-param enableEmail = true
+param enableEmail = false  // Disabled by default
+param enableAdvancedMessaging = false
+param deployApplication = true  // Set to false for infrastructure-only
 ```
 
 ## 📊 Monitoring & Observability

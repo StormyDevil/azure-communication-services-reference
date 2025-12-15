@@ -18,9 +18,9 @@ Output:
 """
 
 from diagrams import Diagram, Cluster, Edge
-from diagrams.azure.compute import AppServices, FunctionApps, ContainerApps
+from diagrams.azure.compute import AppServices, FunctionApps
 from diagrams.azure.database import CosmosDb, BlobStorage
-from diagrams.azure.integration import EventGridDomains, APIManagement
+from diagrams.azure.integration import EventGridDomains
 from diagrams.azure.security import KeyVaults
 from diagrams.azure.identity import ManagedIdentities, ActiveDirectory
 from diagrams.azure.network import VirtualNetworks, Subnets, NetworkSecurityGroupsClassic
@@ -68,51 +68,39 @@ def create_main_architecture():
         # Azure Landing Zone
         with Cluster("Azure Landing Zone - Application Subscription"):
             
-            # API Layer
-            with Cluster("API Layer"):
-                apim = APIManagement("API Management\n(Rate limiting, Auth)")
-            
             # Application Tier
             with Cluster("Application Tier"):
-                app_service = AppServices("App Service\n(Backend API)")
+                app_service = AppServices("App Service\n(Flask API)")
                 functions = FunctionApps("Azure Functions\n(Event Processing)")
-                container_app = ContainerApps("Container Apps\n(Microservices)")
             
             # Communication Services
             with Cluster("Azure Communication Services"):
-                acs = Resourcegroups("ACS Resource")
-                event_grid = EventGridDomains("Event Grid\n(Webhooks)")
+                acs = Resourcegroups("ACS Resource\n(Voice/Video/Chat/SMS)")
+                event_grid = EventGridDomains("Event Grid\n(System Topic)")
             
             # Security & Identity
             with Cluster("Security & Identity"):
-                key_vault = KeyVaults("Key Vault\n(Secrets)")
+                key_vault = KeyVaults("Key Vault\n(Secrets & Keys)")
                 managed_id = ManagedIdentities("Managed Identity")
-                entra_id = ActiveDirectory("Entra ID")
             
             # Data Layer
             with Cluster("Data Layer"):
                 cosmos_db = CosmosDb("Cosmos DB\n(Chat History)")
-                blob_storage = BlobStorage("Blob Storage\n(Recordings)")
+                blob_storage = BlobStorage("Storage Account\n(Recordings)")
             
             # Monitoring
             with Cluster("Monitoring"):
-                log_analytics = Monitor("Log Analytics")
-                app_insights = ApplicationInsights("App Insights")
+                log_analytics = Monitor("Log Analytics\nWorkspace")
+                app_insights = ApplicationInsights("Application\nInsights")
         
-        # Client to API connections
-        web_app >> Edge(label="HTTPS") >> apim
-        mobile_app >> Edge(label="HTTPS") >> apim
-        bot >> Edge(label="HTTPS") >> apim
-        
-        # API to Application tier
-        apim >> app_service
-        apim >> functions
-        apim >> container_app
+        # Client to Application tier connections
+        web_app >> Edge(label="HTTPS") >> app_service
+        mobile_app >> Edge(label="HTTPS") >> app_service
+        bot >> Edge(label="HTTPS") >> functions
         
         # Application to ACS
         app_service >> Edge(label="Voice/Video/Chat") >> acs
-        functions >> Edge(label="SMS/Email") >> acs
-        container_app >> Edge(label="Advanced Messaging") >> acs
+        functions >> Edge(label="SMS Events") >> acs
         
         # ACS Events
         acs >> Edge(label="Events") >> event_grid
@@ -122,7 +110,7 @@ def create_main_architecture():
         app_service >> Edge(style="dashed") >> key_vault
         functions >> Edge(style="dashed") >> key_vault
         app_service >> Edge(style="dashed") >> managed_id
-        managed_id >> Edge(style="dashed") >> entra_id
+        functions >> Edge(style="dashed") >> managed_id
         
         # Data connections
         functions >> Edge(label="Store") >> cosmos_db
