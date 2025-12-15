@@ -1,7 +1,6 @@
 # Azure Communication Services - Enterprise Reference Architecture
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FStormyDevil%2Fazure-communication-services-reference%2Fmain%2Finfra%2Fbicep%2Fmain.json)
-[![Open in Dev Container](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/StormyDevil/azure-communication-services-reference)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Azure Well-Architected](https://img.shields.io/badge/Azure-Well--Architected-blue)](https://learn.microsoft.com/azure/well-architected/)
 
@@ -104,24 +103,7 @@ graph TB
 
 ## 🚀 Quick Start
 
-### Option 1: Dev Container (Recommended)
-
-Open this repository in a Dev Container for a fully configured development environment:
-
-1. Install [VS Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-2. Clone the repository and open in VS Code
-3. Click "Reopen in Container" when prompted (or F1 → "Dev Containers: Reopen in Container")
-4. Wait for the container to build (includes Azure CLI, Bicep, PowerShell, Python)
-
-**Included in Dev Container:**
-- Azure CLI with Bicep extension
-- PowerShell 7+
-- Python 3.11 with ACS SDK
-- Node.js 20 LTS
-- Azure Functions Core Tools
-- VS Code extensions for Azure development
-
-### Option 2: One-Click Deploy
+### Option 1: One-Click Deploy (Recommended)
 
 ```bash
 # Clone the repository
@@ -129,10 +111,15 @@ git clone https://github.com/StormyDevil/azure-communication-services-reference.
 cd azure-communication-services-reference
 
 # Deploy to Azure
-pwsh ./scripts/deploy.ps1 -Environment dev -Location westus2
+pwsh ./scripts/deploy.ps1 -Environment dev -Location swedencentral
 ```
 
-### Option 3: Step-by-Step Deployment
+**Prerequisites:**
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) 2.50+ with Bicep CLI
+- [PowerShell 7+](https://learn.microsoft.com/powershell/scripting/install/installing-powershell)
+- [Python 3.9+](https://www.python.org/downloads/) (for sample applications)
+
+### Option 2: Step-by-Step Deployment
 
 ```bash
 # 1. Login to Azure
