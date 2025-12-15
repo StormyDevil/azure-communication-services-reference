@@ -128,10 +128,13 @@ az login
 # 2. Set subscription
 az account set --subscription "YOUR_SUBSCRIPTION_ID"
 
-# 3. Create resource group
-az group create --name rg-acs-dev --location swedencentral
+# 3. Set your preferred location
+LOCATION="swedencentral"  # Options: swedencentral, westeurope, eastus, westus2, etc.
 
-# 4. Deploy infrastructure
+# 4. Create resource group
+az group create --name rg-acs-dev --location $LOCATION
+
+# 5. Deploy infrastructure
 az deployment group create \
     --name acs-deployment \
     --resource-group rg-acs-dev \
